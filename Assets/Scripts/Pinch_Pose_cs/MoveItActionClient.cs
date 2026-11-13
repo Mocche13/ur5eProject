@@ -3,7 +3,7 @@ using UnityEngine;
 using Unity.Robotics.ROSTCPConnector;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.Std;
-using RosMessageTypes.Ur5eMoveitActions;
+using RosMessageTypes.Ur5eProject; // Il nostro namespace aggiornato
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 
 public class MoveItActionClient : MonoBehaviour
@@ -30,7 +30,8 @@ public class MoveItActionClient : MonoBehaviour
 
     private ROSConnection ros;
 
-    public class PlanToPoseResult
+    // Rinominate per non fare conflitto con le classi delle azioni ROS
+    public class PlanResultData
     {
         public bool success;
         public string planId;
@@ -38,19 +39,20 @@ public class MoveItActionClient : MonoBehaviour
         public string errorMessage;
     }
 
-    public class ExecutePlanResult
+    public class ExecuteResultData
     {
         public bool success;
         public string errorMessage;
     }
 
-    private Action<PlanToPoseResult> currentPlanCallback;
-    private Action<ExecutePlanResult> currentExecuteCallback;
+    private Action<PlanResultData> currentPlanCallback;
+    private Action<ExecuteResultData> currentExecuteCallback;
 
     void Start()
     {
         ros = ROSConnection.GetOrCreateInstance();
 
+        // Le azioni non hanno "Msg", i messaggi standard sì
         ros.RegisterPublisher<PlanToPoseGoalMsg>(planGoalTopic);
         ros.RegisterPublisher<ExecutePlanGoalMsg>(executeGoalTopic);
         ros.RegisterPublisher<BoolMsg>(gripperOpenTopic);
@@ -64,7 +66,7 @@ public class MoveItActionClient : MonoBehaviour
     }
 
     public void PlanToPose(Vector3 unityWorldPos, Quaternion unityWorldRot,
-                            Action<PlanToPoseResult> callback)
+                            Action<PlanResultData> callback)
     {
         currentPlanCallback = callback;
 
@@ -77,6 +79,9 @@ public class MoveItActionClient : MonoBehaviour
         Debug.Log($"[MoveItActionClient] ROS pose: pos=({rosPos.x:F3}, {rosPos.y:F3}, {rosPos.z:F3})");
 
         var goal = new PlanToPoseGoalMsg();
+        
+        // Assegnazione della Pose (ora con header, come da nuovo file .action)
+        goal.target_pose = new PoseStampedMsg();
         goal.target_pose.header.frame_id = "base_link";
         goal.target_pose.pose.position.x = rosPos.x;
         goal.target_pose.pose.position.y = rosPos.y;
@@ -86,14 +91,23 @@ public class MoveItActionClient : MonoBehaviour
         goal.target_pose.pose.orientation.z = rosRot.z;
         goal.target_pose.pose.orientation.w = rosRot.w;
 
+        // Assegnazione dei parametri di pianificazione 
+        goal.planning_time = planningTime;
+        goal.velocity_scaling = velocityScaling;
+        goal.acceleration_scaling = accelerationScaling;
+        goal.planning_id = plannerId;
+
         ros.Publish(planGoalTopic, goal);
         Debug.Log($"[MoveItActionClient] Plan goal sent: pos=({rosPos.x:F3}, {rosPos.y:F3}, {rosPos.z:F3})");
     }
 
-    public void ExecutePlan(string planId, Action<ExecutePlanResult> callback)
+    public void ExecutePlan(string planId, Action<ExecuteResultData> callback)
     {
         currentExecuteCallback = callback;
+        
+        // Ora combacia perfettamente col nostro file .action in WSL
         var goal = new ExecutePlanGoalMsg { plan_id = planId };
+        
         ros.Publish(executeGoalTopic, goal);
         Debug.Log($"[MoveItActionClient] Execute goal sent: planId={planId}");
     }
@@ -118,11 +132,12 @@ public class MoveItActionClient : MonoBehaviour
         for (int i = 0; i < msg.tcp_waypoints.Length; i++)
         {
             var p = msg.tcp_waypoints[i];
+            // PointMsg ha le coordinate (x,y,z)
             Vector3 localPos = new Vector3(-(float)p.y, (float)p.z, (float)p.x);
             waypoints[i] = robotBase.TransformPoint(localPos);
         }
 
-        var result = new PlanToPoseResult
+        var result = new PlanResultData
         {
             success = msg.success,
             planId = msg.plan_id,
@@ -138,7 +153,7 @@ public class MoveItActionClient : MonoBehaviour
     {
         Debug.Log($"[MoveItActionClient] Execute result: success={msg.success}");
 
-        var result = new ExecutePlanResult
+        var result = new ExecuteResultData
         {
             success = msg.success,
             errorMessage = msg.message
