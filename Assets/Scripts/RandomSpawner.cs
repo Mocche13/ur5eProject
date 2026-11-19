@@ -1,23 +1,25 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class RandomSpawner : MonoBehaviour
 {
     [Header("Oggetti e Quantità")]
-    public GameObject[] prefabsDaSpawnare; // Array dei tuoi oggetti (es. Capsula A, B, C...)
-    public int[] quantitaPerOggetto;      // Quantità N corrispondente per ciascun oggetto
+    public GameObject[] prefabsDaSpawnare;
+    public int[] quantitaPerOggetto;
 
-    [Header("Area del Tavolo")]
-    public Transform superficieTavolo;    // Il piano del tavolo in Unity
-    public Vector2 dimensioniTavolo = new Vector2(1.0f, 1.0f); // Dimensioni (larghezza, profondità) dell'area di spawn
-    public Vector3 offsetSpawn = Vector3.zero; // Spostamento del centro dell'area rispetto al tavolo
-    public float altezzaSpawn = 0.05f;    // Altezza sopra il tavolo per lo spawn
+    [Header("Area e Piano di Appoggio")]
+    public Transform superficieTavolo;
+    public Vector2 dimensioniTavolo = new Vector2(0.5f, 0.8f);
+    public Vector3 offsetSpawn = Vector3.zero;
+    public float altezzaPartenzaRaycast = 0.5f; // Altezza sopra il piano da cui parte il raggio
+    public LayerMask layerPiano = ~0;           // Layer del tavolo (lascia Everything o imposta il layer del piano)
 
     [Header("Scala Oggetti")]
-    public Vector3 scalaCustom = Vector3.one; // Eventuale scala forzata per le capsule
+    public Vector3 scalaCustom = Vector3.one;
 
     [Header("Parametri di Spaziatura")]
-    public float distanzaMinima = 0.1f;    // Distanza minima tra un oggetto e l'altro
-    public int tentativiMassimi = 30;     // Tentativi massimi per trovare una posizione libera
+    public float distanzaMinima = 0.08f;
+    public int tentativiMassimi = 30;
 
     void Start()
     {
@@ -32,68 +34,104 @@ public class RandomSpawner : MonoBehaviour
             return;
         }
 
-        // Calcola il centro effettivo considerando l'offset impostato nell'Inspector
-        Vector3 centroTavolo = superficieTavolo ? superficieTavolo.position + offsetSpawn : transform.position + offsetSpawn;
+        Vector3 centroArea = superficieTavolo
+            ? superficieTavolo.position + offsetSpawn
+            : transform.position + offsetSpawn;
 
-        // Lista per tenere traccia delle posizioni già occupate
-        System.Collections.Generic.List<Vector3> posizioniGenerate = new System.Collections.Generic.List<Vector3>();
+        List<Vector3> posizioniOccupate = new List<Vector3>();
 
         for (int i = 0; i < prefabsDaSpawnare.Length; i++)
         {
             int quantita = quantitaPerOggetto[i];
             GameObject prefab = prefabsDaSpawnare[i];
 
+            if (prefab == null) continue;
+
             for (int q = 0; q < quantita; q++)
             {
-                Vector3 posizioneFinale = Vector3.zero;
-                bool posizioneTrovata = false;
+                bool trovato = false;
+                Vector3 posizioneAppoggio = Vector3.zero;
 
-                // Tenta di trovare una posizione casuale libera
                 for (int tentativo = 0; tentativo < tentativiMassimi; tentativo++)
                 {
-                    // Genera coordinate casuali entro i limiti dell'area definita
                     float randomX = Random.Range(-dimensioniTavolo.x / 2f, dimensioniTavolo.x / 2f);
                     float randomZ = Random.Range(-dimensioniTavolo.y / 2f, dimensioniTavolo.y / 2f);
 
-                    Vector3 candidato = centroTavolo + new Vector3(randomX, altezzaSpawn, randomZ);
+                    Vector3 origineRaggio = new Vector3(
+                        centroArea.x + randomX,
+                        centroArea.y + altezzaPartenzaRaycast,
+                        centroArea.z + randomZ
+                    );
 
-                    // Controlla la distanza dagli altri oggetti già piazzati
-                    bool troppoVicino = false;
-                    foreach (Vector3 posEsistente in posizioniGenerate)
+                    // Lancia un raggio verso il basso per trovare la superficie reale del tavolo
+                    if (Physics.Raycast(origineRaggio, Vector3.down, out RaycastHit hit, altezzaPartenzaRaycast * 2f, layerPiano))
                     {
-                        if (Vector3.Distance(new Vector3(candidato.x, 0, candidato.z), new Vector3(posEsistente.x, 0, posEsistente.z)) < distanzaMinima)
+                        // Se è assegnato superficieTavolo, verifica che il colpo sia su quel tavolo o sui suoi figli
+                        if (superficieTavolo != null && hit.transform != superficieTavolo && !hit.transform.IsChildOf(superficieTavolo))
                         {
-                            troppoVicino = true;
+                            continue;
+                        }
+
+                        Vector3 candidatoXZ = new Vector3(hit.point.x, 0f, hit.point.z);
+
+                        bool troppoVicino = false;
+                        foreach (Vector3 posEsistente in posizioniOccupate)
+                        {
+                            Vector3 esistenteXZ = new Vector3(posEsistente.x, 0f, posEsistente.z);
+                            if (Vector3.Distance(candidatoXZ, esistenteXZ) < distanzaMinima)
+                            {
+                                troppoVicino = true;
+                                break;
+                            }
+                        }
+
+                        if (!troppoVicino)
+                        {
+                            posizioneAppoggio = hit.point;
+                            trovato = true;
                             break;
                         }
                     }
-
-                    if (!troppoVicino)
-                    {
-                        posizioneFinale = candidato;
-                        posizioneTrovata = true;
-                        break;
-                    }
                 }
 
-                // Se ha trovato una posizione valida, istanzia l'oggetto
-                if (posizioneTrovata)
+                if (trovato)
                 {
-                    posizioniGenerate.Add(posizioneFinale);
+                    posizioniOccupate.Add(posizioneAppoggio);
 
-                    // Rotazione casuale sull'asse Y per maggiore realismo
-                    Quaternion rotazioneCasuale = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
-
-                    GameObject istanza = Instantiate(prefab, posizioneFinale, rotazioneCasuale);
-
-                    // Applica la scala custom configurata nell'Inspector
+                    Quaternion rotazioneCasuale = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                    GameObject istanza = Instantiate(prefab, posizioneAppoggio, rotazioneCasuale);
                     istanza.transform.localScale = scalaCustom;
+
+                    // Calcola l'altezza del bounding box dopo aver applicato la scala
+                    float offsetY = CalcolaMezzaAltezza(istanza);
+                    istanza.transform.position = new Vector3(
+                        posizioneAppoggio.x,
+                        posizioneAppoggio.y + offsetY,
+                        posizioneAppoggio.z
+                    );
                 }
                 else
                 {
-                    Debug.LogWarning($"Impossibile trovare una posizione libera per {prefab.name} (limite tentativi raggiunto).");
+                    Debug.LogWarning($"Nessuna posizione libera trovata per {prefab.name}.");
                 }
             }
         }
+    }
+
+    float CalcolaMezzaAltezza(GameObject obj)
+    {
+        Collider col = obj.GetComponentInChildren<Collider>();
+        if (col != null)
+        {
+            return col.bounds.extents.y;
+        }
+
+        Renderer rend = obj.GetComponentInChildren<Renderer>();
+        if (rend != null)
+        {
+            return rend.bounds.extents.y;
+        }
+
+        return 0f;
     }
 }
