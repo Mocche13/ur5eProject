@@ -7,12 +7,16 @@ public class RandomSpawner : MonoBehaviour
     public GameObject[] prefabsDaSpawnare;
     public int[] quantitaPerOggetto;
 
+    [Header("Genitore Gerarchia")]
+    [Tooltip("Trascina qui l'oggetto Batch. Se lasciato vuoto, userà l'oggetto su cui è montato questo script.")]
+    public Transform contenitoreBatch;
+
     [Header("Area e Piano di Appoggio")]
     public Transform superficieTavolo;
     public Vector2 dimensioniTavolo = new Vector2(0.5f, 0.8f);
     public Vector3 offsetSpawn = Vector3.zero;
-    public float altezzaPartenzaRaycast = 0.5f; // Altezza sopra il piano da cui parte il raggio
-    public LayerMask layerPiano = ~0;           // Layer del tavolo (lascia Everything o imposta il layer del piano)
+    public float altezzaPartenzaRaycast = 0.5f;
+    public LayerMask layerPiano = ~0;
 
     [Header("Scala Oggetti")]
     public Vector3 scalaCustom = Vector3.one;
@@ -33,6 +37,9 @@ public class RandomSpawner : MonoBehaviour
             Debug.LogError("Il numero di prefabs e delle quantità deve essere uguale!");
             return;
         }
+
+        // Se non assegni nulla nell'Inspector, usa questo stesso GameObject come padre
+        Transform parentTarget = contenitoreBatch != null ? contenitoreBatch : transform;
 
         Vector3 centroArea = superficieTavolo
             ? superficieTavolo.position + offsetSpawn
@@ -63,10 +70,8 @@ public class RandomSpawner : MonoBehaviour
                         centroArea.z + randomZ
                     );
 
-                    // Lancia un raggio verso il basso per trovare la superficie reale del tavolo
                     if (Physics.Raycast(origineRaggio, Vector3.down, out RaycastHit hit, altezzaPartenzaRaycast * 2f, layerPiano))
                     {
-                        // Se è assegnato superficieTavolo, verifica che il colpo sia su quel tavolo o sui suoi figli
                         if (superficieTavolo != null && hit.transform != superficieTavolo && !hit.transform.IsChildOf(superficieTavolo))
                         {
                             continue;
@@ -109,6 +114,9 @@ public class RandomSpawner : MonoBehaviour
                         posizioneAppoggio.y + offsetY,
                         posizioneAppoggio.z
                     );
+
+                    // Rende la capsula figlia di Batch mantenendo posizione e scala nel mondo
+                    istanza.transform.SetParent(parentTarget, true);
                 }
                 else
                 {

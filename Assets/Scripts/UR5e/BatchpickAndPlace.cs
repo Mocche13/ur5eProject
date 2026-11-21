@@ -1,12 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class BatchPickAndPlace : MonoBehaviour
 {
     [Header("Riferimenti")]
     [Tooltip("Trascina qui il robot che ha lo script RobotProgram.")]
     public RobotProgram robotProgram;
+
+    [Tooltip("Trascina qui il testo TextMeshPro che contiene il numero di operazioni da eseguire.")]
+    public TMP_Text quantityText;
 
     [Header("Impostazioni Sequenza")]
     [Tooltip("Pausa in secondi tra un ciclo di Pick & Place e il successivo.")]
@@ -17,7 +21,7 @@ public class BatchPickAndPlace : MonoBehaviour
 
     /// <summary>
     /// Collega questo metodo all'OnClick() del tuo bottone UI per avviare
-    /// il Pick & Place automatico su tutti i figli di questo oggetto.
+    /// il Pick & Place automatico sul numero di capsule indicato nel TextMeshPro.
     /// </summary>
     public void StartBatchPickAndPlace()
     {
@@ -39,17 +43,27 @@ public class BatchPickAndPlace : MonoBehaviour
             return;
         }
 
-        StartCoroutine(BatchRoutine());
+        // Legge il numero dal componente TextMeshPro
+        int requestedCount = 0;
+        if (quantityText != null)
+        {
+            int.TryParse(quantityText.text.Trim(), out requestedCount);
+        }
+
+        // Se il valore letto è <= 0, non avvia nulla
+        if (requestedCount <= 0) return;
+
+        StartCoroutine(BatchRoutine(requestedCount));
     }
 
-    private IEnumerator BatchRoutine()
+    private IEnumerator BatchRoutine(int maxItemsToProcess)
     {
         isBatchRunning = true;
 
-        // 1. Salva tutti i figli in una lista fissa prima di iniziare
-        // (fondamentale perché durante il Grab l'oggetto cambia genitore!)
+        // 1. Raccoglie i figli attivi fino al massimo richiesto dall'utente
+        // (se requestedCount supera i figli disponibili, si ferma silenziosamente ai figli presenti)
         List<Transform> itemsToPick = new List<Transform>();
-        for (int i = 0; i < transform.childCount; i++)
+        for (int i = 0; i < transform.childCount && itemsToPick.Count < maxItemsToProcess; i++)
         {
             Transform child = transform.GetChild(i);
             if (child.gameObject.activeInHierarchy)
@@ -58,28 +72,22 @@ public class BatchPickAndPlace : MonoBehaviour
             }
         }
 
-        // 2. Esegue il ciclo Pick & Place per ogni oggetto in coda
+        // 2. Esegue il ciclo Pick & Place per ogni oggetto selezionato
         for (int i = 0; i < itemsToPick.Count; i++)
         {
             Transform currentItem = itemsToPick[i];
             if (currentItem == null) continue;
 
-            // Assegna l'oggetto corrente come target del robot
             robotProgram.liveTarget = currentItem;
-
-            // Avvia la sequenza singola (MoveJ -> Grab -> Home -> Release)
             robotProgram.RunPickAndPlace();
 
-            // Aspetta un frame per assicurarsi che robotProgram.IsRunning sia diventato true
             yield return null;
 
-            // Attende finché il robot non ha completato l'intero ciclo per questo oggetto
             while (robotProgram.IsRunning)
             {
                 yield return null;
             }
 
-            // Pausa prima di passare all'oggetto successivo
             if (delayBetweenItems > 0f && i < itemsToPick.Count - 1)
             {
                 yield return new WaitForSeconds(delayBetweenItems);
