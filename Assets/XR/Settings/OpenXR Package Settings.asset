@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5019471fb2174e5c852ecd4047163007, type: 3}
   m_Name: HandInteractionProfile Android
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.HandInteractionProfile
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Hand Interaction Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.handinteraction
@@ -703,7 +703,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6096094d69d82cc40947df806f66ab34, type: 3}
   m_Name: OpenXRCompositionLayersFeature Android
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.CompositionLayers.OpenXRCompositionLayersFeature
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Composition Layers Support
   version: 1.0.0
   featureIdInternal: com.unity.openxr.feature.compositionlayers
@@ -956,7 +956,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a24be4b5ebfe5f4d8ed1de9b25cb7aa, type: 3}
   m_Name: HandCommonPosesInteraction Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.HandCommonPosesInteraction
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Hand Interaction Poses
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.handinteractionposes
@@ -979,41 +979,41 @@ MonoBehaviour:
   m_Name: Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.OpenXRSettings
   features:
-  - {fileID: 4554589908801450561}
-  - {fileID: 7915380446685983444}
-  - {fileID: -8456209435742891939}
-  - {fileID: 5765122953258997975}
-  - {fileID: 3121086179728103328}
-  - {fileID: 4635374673807029374}
-  - {fileID: 6556959947678367067}
-  - {fileID: 2964505934261009201}
-  - {fileID: 1395049211270051406}
-  - {fileID: 1424782222076526669}
-  - {fileID: -1324184877784136117}
-  - {fileID: 6904654098237110197}
-  - {fileID: 5772612826421597291}
-  - {fileID: -7135774511808530463}
-  - {fileID: -3451996236411609896}
-  - {fileID: -843201166736832951}
-  - {fileID: 1558315513932117823}
-  - {fileID: -1274213088444524315}
-  - {fileID: -3211574118224553911}
+  - {fileID: -7590852588058594727}
   - {fileID: -6008689414701398742}
   - {fileID: 1703798500175263756}
+  - {fileID: -8456209435742891939}
   - {fileID: -9104745645229194645}
-  - {fileID: 3297036442056171949}
-  - {fileID: -6294798389803494132}
+  - {fileID: 1395049211270051406}
+  - {fileID: 6556959947678367067}
+  - {fileID: 1558315513932117823}
+  - {fileID: -843201166736832951}
+  - {fileID: 6904654098237110197}
+  - {fileID: 1424782222076526669}
+  - {fileID: -7135774511808530463}
+  - {fileID: 5772612826421597291}
+  - {fileID: -1274213088444524315}
+  - {fileID: 2964505934261009201}
+  - {fileID: -2230876356009885208}
+  - {fileID: 445254462221265605}
+  - {fileID: -8136434900921429296}
   - {fileID: -5480714631257446432}
   - {fileID: 3189067823240794429}
-  - {fileID: -2230876356009885208}
-  - {fileID: -1499599617985681055}
-  - {fileID: -8136434900921429296}
-  - {fileID: 445254462221265605}
-  - {fileID: -7590852588058594727}
-  - {fileID: 8086270198713623391}
-  - {fileID: -6278998633064607460}
   - {fileID: 7071476257298905697}
+  - {fileID: -1499599617985681055}
   - {fileID: 1621556804949292916}
+  - {fileID: 8086270198713623391}
+  - {fileID: 3297036442056171949}
+  - {fileID: -6294798389803494132}
+  - {fileID: -6278998633064607460}
+  - {fileID: 4635374673807029374}
+  - {fileID: -1324184877784136117}
+  - {fileID: 7915380446685983444}
+  - {fileID: 3121086179728103328}
+  - {fileID: 5765122953258997975}
+  - {fileID: 4554589908801450561}
+  - {fileID: -3211574118224553911}
+  - {fileID: -3451996236411609896}
   customLoaderName: 
   m_renderMode: 1
   m_latencyOptimization: 0
@@ -1233,7 +1233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6096094d69d82cc40947df806f66ab34, type: 3}
   m_Name: OpenXRCompositionLayersFeature Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.CompositionLayers.OpenXRCompositionLayersFeature
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Composition Layers Support
   version: 1.0.0
   featureIdInternal: com.unity.openxr.feature.compositionlayers
@@ -1708,7 +1708,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5019471fb2174e5c852ecd4047163007, type: 3}
   m_Name: HandInteractionProfile Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.HandInteractionProfile
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Hand Interaction Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.handinteraction
@@ -1799,7 +1799,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a24be4b5ebfe5f4d8ed1de9b25cb7aa, type: 3}
   m_Name: HandCommonPosesInteraction Android
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.HandCommonPosesInteraction
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Hand Interaction Poses
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.handinteractionposes
